@@ -1,0 +1,181 @@
+--2번
+DECLARE
+    v_eid employees.employee_id%TYPE := &사원번호;
+    v_department_name departments.department_name%TYPE;
+    v_job_id employees.job_id%TYPE;
+    v_salary employees.salary%TYPE;
+    v_commission_pct employees.commission_pct%TYPE;
+BEGIN
+    SELECT d.department_name, e.job_id, NVL(e.salary, 0), NVL(e.commission_pct,0)
+    INTO v_department_name, v_job_id, v_salary, v_commission_pct
+    FROM employees e JOIN departments d ON e.department_id = d.department_id
+    WHERE e.employee_id = v_eid;
+    
+    DBMS_OUTPUT.PUT_LINE(v_department_name || ' ' || v_job_id || ' ' || v_salary || ' ' || v_commission_pct);
+    
+END;
+/
+
+--3번
+DECLARE
+    v_eid employees.employee_id%TYPE := &사원번호;
+    v_hire_date employees.hire_date%TYPE;
+    
+BEGIN
+    SELECT hire_date
+    INTO v_hire_date
+    FROM employees
+    WHERE employee_id = v_eid;
+        
+    IF TO_CHAR(v_hire_date,'yyyy') >= '2015' THEN
+        DBMS_OUTPUT.PUT_LINE('New employee');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Career employee');
+    END IF;
+    
+END;
+/
+
+--4번
+BEGIN
+    FOR i IN 1 .. 9 LOOP 
+        IF MOD(i,2) <> 0 THEN
+            FOR j IN 1 .. 9 LOOP 
+                DBMS_OUTPUT.PUT(i || '*' || j || '=' || i * j || ' ');
+            END LOOP;
+        END IF;
+        DBMS_OUTPUT.PUT_LINE('');
+    END LOOP;
+END;
+/
+
+--5번
+DECLARE
+    CURSOR emp_cursor IS
+        SELECT e.employee_id, e.last_name, e.salary
+        FROM employees e left outer join departments d on e.department_id = d.department_id
+        WHERE e.department_id = &부서번호;
+BEGIN
+    FOR emp_record IN emp_cursor LOOP
+        DBMS_OUTPUT.PUT_LINE(emp_record.employee_id || ' ' || emp_record.last_name || ' ' || emp_record.salary);
+    END LOOP;
+END;
+/
+
+--6번
+CREATE PROCEDURE y_update
+(
+    v_employee_id IN NUMBER,
+    v_sal_increase IN NUMBER
+)
+IS
+    v_comm NUMBER(5,2) := 0;
+    e_no_employee EXCEPTION;
+BEGIN
+
+    v_comm := NVL(v_sal_increase,0) / 100;
+    
+    UPDATE employees
+    SET salary = salary + (salary * v_comm)
+    WHERE employee_id = v_employee_id;
+    
+    IF SQL%ROWCOUNT = 0 THEN
+        RAISE e_no_employee;
+    ELSE
+        DBMS_OUTPUT.PUT_LINE(v_employee_id || '번의 사원급여가 수정되었습니다.');
+    END IF;
+    
+EXCEPTION
+
+WHEN e_no_employee THEN
+    DBMS_OUTPUT.PUT_LINE('No search employee!!');
+    
+END;
+/
+select TRUNC(MONTHS_BETWEEN(TRUNC(SYSDATE), TO_DATE('19970626','YYYYMMDD')) / 12)
+from dual;
+
+drop PROCEDURE y_year;
+--7번
+CREATE PROCEDURE y_year
+    (v_no IN VARCHAR2)
+IS
+
+v_age VARCHAR2(1000);
+v_age2 VARCHAR2(1000);
+v_ageResult NUMBER(20);
+v_gender VARCHAR2(1000);
+BEGIN
+    v_age := SUBSTR(v_no,1,6);
+    v_gender := SUBSTR(v_no,7,1);
+    
+    IF v_gender = 3 OR v_gender = 4 THEN
+        v_age2 := 20;
+    ELSIF v_gender = 1 OR v_gender = 2 THEN
+        v_age2 := 19;
+    END IF;
+    DBMS_OUTPUT.PUT_LINE(v_age);
+    DBMS_OUTPUT.PUT_LINE(v_gender);
+    IF v_gender = 1 OR v_gender = 3 THEN
+        v_gender := '남';
+    ELSIF v_gender = 2 OR v_gender = 4 THEN
+        v_gender := '여';
+    END IF;
+    
+    SELECT TO_NUMBER(TRUNC(MONTHS_BETWEEN(TRUNC(SYSDATE), TO_DATE(v_age2 || v_age,'YYYYMMDD')) / 12))
+    INTO v_ageResult
+    FROM dual;
+    
+    IF v_ageResult < 0 THEN
+        v_ageResult := v_ageResult + 100 -1;
+    ELSE
+        v_ageResult := v_ageResult -1;
+    END IF;
+    
+    DBMS_OUTPUT.PUT_LINE('만 나이 : ' || v_ageResult || ', 성별 : ' || v_gender);
+END;
+/
+EXECUTE y_year('9706263234567');
+
+--8번
+CREATE FUNCTION yd_func
+(v_empolyee_id IN employees.employee_id%TYPE)
+RETURN VARCHAR2
+IS
+
+v_hire_date VARCHAR2(1000);
+BEGIN
+    SELECT TRUNC(MONTHS_BETWEEN(sysdate, hire_date)/12, 0)
+    INTO v_hire_date
+    FROM employees
+    WHERE employee_id = v_empolyee_id;
+    
+    RETURN v_hire_date;
+END;
+/
+select yd_func(employee_id) from employees;
+
+--9번
+
+
+--10번
+SELECT name, text
+FROM user_source
+WHERE type IN ('PROCEDURE','FUNCTION','PACKAGE','PACKAGE BODY');
+
+--11번
+DECLARE
+  v_star VARCHAR2(30);
+BEGIN
+    FOR i IN 1 .. 10 LOOP
+    v_star := '';
+        FOR j IN 1 .. 10-i-1 LOOP
+            v_star := v_star || ' ';
+        END LOOP;
+        FOR e IN 1 .. i-1 LOOP
+            v_star := v_star || '*';
+        END LOOP;
+    DBMS_OUTPUT.PUT_LINE(v_star);
+    END LOOP;
+END;
+/
